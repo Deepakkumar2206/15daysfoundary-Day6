@@ -1,66 +1,106 @@
-## Foundry
+# Auction Contract (Foundry)
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-Foundry consists of:
+## This project demonstrates a simple Ethereum auction smart contract where users can place bids, withdraw previous bids, and the owner can end the auction. Events are indexed for easier tracking of bidders and winners.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+### Key Concepts
 
-## Documentation
+- vm.warp(timestamp) - Moves blockchain time forward to test time-based logic (e.g., ending an auction).
+- vm.expectEmit() - Tells Foundry to expect a specific event in the next transaction. Useful to verify HighestBidIncreased or AuctionEnded.
+- eventlogs - Captures and inspects emitted events during contract execution.
+- Time-based logic - Contracts using block.timestamp (like auction end) require manipulating time in tests to simulate future scenarios.
 
-https://book.getfoundry.sh/
+### Prerequisites
 
-## Usage
-
-### Build
+Install Foundry (Forge, Cast, Anvil):
 
 ```shell
-$ forge build
+curl -L https://foundry.paradigm.xyz | bash
+
+foundryup
 ```
 
-### Test
+### What is foundry.toml?
+
+Foundry’s config file for Solidity projects. It defines:
+- Solidity version
+- Optimizer settings
+- Output folder and remappings
+
+Example:
 
 ```shell
-$ forge test
+[profile.default]
+src = 'src'
+out = 'out'
+libs = ['lib']
+optimizer = true
+optimizer_runs = 200
 ```
 
-### Format
+
+
+### Contracts Explanation
+
+#### Auction.sol
+
+#### Implements a single auction smart contract:
+- Users can place bids (bid())
+- Previous highest bidder can withdraw funds (withdraw())
+- Owner can end the auction and receive the highest bid (endAuction())
+- Uses mapping(address => uint256) to track pending returns.
+- Events are indexed (HighestBidIncreased and AuctionEnded) for easy filtering.
+
+#### Security measures:
+- Only the owner can end the auction (onlyOwner)
+- Prevents overwriting bids without refunding previous bidder
+
+#### Test File
+- Auction.t.sol (or equivalent)
+- Tests bidding: ensures bids update highestBid and highestBidder.
+- Tests withdrawals: checks previous bidders can withdraw their funds.
+- Tests auction end: verifies only the owner can end the auction and highest bid is transferred.
+- Uses Foundry’s forge test framework.
+- Shows pass/fail output for all functions.
+
+
+### Sample Output
+
+- User Alice bids 1 ETH:
+```shell
+HighestBidIncreased: bidder=Alice, amount=1 ETH
+```
+
+- User Bob bids 2 ETH:
+```shell
+HighestBidIncreased: bidder=Bob, amount=2 ETH
+```
+
+- Owner ends the auction:
+```shell
+AuctionEnded: winner=Bob, amount=2 ETH
+```
+
+### Explanation
+
+- Each new bid updates highestBidder and highestBid.
+- Previous bidders can withdraw funds using withdraw().
+- Owner receives the final highest bid once the auction ends.
+
+### Build & Test Commands
 
 ```shell
-$ forge fmt
+# Compile contracts
+forge build
+
+# Run tests
+forge test -vv
+
+# Optional: snapshot for testing state
+forge snapshot
 ```
 
-### Gas Snapshots
+### End of the Project.
 
-```shell
-$ forge snapshot
-```
 
-### Anvil
 
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
