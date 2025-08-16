@@ -11,8 +11,9 @@ contract Auction {
     mapping(address => uint256) public pendingReturns;
     bool public ended;
 
-    event HighestBidIncreased(address bidder, uint256 amount);
-    event AuctionEnded(address winner, uint256 amount);
+    // Adding indexed for better event filtering
+    event HighestBidIncreased(address indexed bidder, uint256 amount);
+    event AuctionEnded(address indexed winner, uint256 amount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not owner");
